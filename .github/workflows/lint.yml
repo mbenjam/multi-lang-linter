@@ -1,62 +1,42 @@
-name: Multi-language Lint
+name: Lint C++ Code
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        language: [python, javascript, cpp]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        if: matrix.language == 'javascript'
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Set up Python
-        if: matrix.language == 'python'
+      - name: Set up Python (for cpplint)
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.x"
 
       - name: Install linters
         run: |
-          if [ "${{ matrix.language }}" == "python" ]; then
-            pip install black flake8
-          elif [ "${{ matrix.language }}" == "javascript" ]; then
-            npm install --save-dev eslint prettier
-          elif [ "${{ matrix.language }}" == "cpp" ]; then
-            sudo apt-get update && sudo apt-get install -y clang-format cpplint
-          fi
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+          pip install cpplint
 
-      - name: Run linters
+      - name: Run cpplint
         run: |
-          if [ "${{ matrix.language }}" == "python" ]; then
-            black . || true
-            flake8 .
-          elif [ "${{ matrix.language }}" == "javascript" ]; then
-            npx eslint . --fix || true
-            npx prettier --write .
-          elif [ "${{ matrix.language }}" == "cpp" ]; then
-            find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
-            find . -name "*.cpp" -o -name "*.h" | xargs cpplint || true
-          fi
+          echo "Running cpplint..."
+          cpplint --recursive .
+
+      - name: Run clang-format check
+        run: |
+          echo "Checking formatting with clang-format..."
+          find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
 
       - name: Commit & Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: auto-fix lint issues for ${{ matrix.language }}"
-          branch: ${{ github.ref_name }}
-          commit_user_name: "mbenjam"
-          commit_user_email: "mbenjam9@dtcc.edu"
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          commit_message: "chore: auto-fix lint issues"
+          branch: ${{ github
