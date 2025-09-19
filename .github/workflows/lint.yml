@@ -1,27 +1,60 @@
-name: Lint
+name: Multi-language Lint
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [python, javascript, cpp]
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Set up Python
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install linters
+        run: |
+          if [ "${{ matrix.language }}" == "python" ]; then
+            pip install black flake8
+          elif [ "${{ matrix.language }}" == "javascript" ]; then
+            npm install --save-dev eslint prettier
+          elif [ "${{ matrix.language }}" == "cpp" ]; then
+            sudo apt-get update && sudo apt-get install -y clang-format cpplint
+          fi
 
       - name: Run linters
         run: |
-          npm run lint || true
-          python3 -m flake8 || true
+          if [ "${{ matrix.language }}" == "python" ]; then
+            black . || true
+            flake8 .
+          elif [ "${{ matrix.language }}" == "javascript" ]; then
+            npx eslint . --fix || true
+            npx prettier --write .
+          elif [ "${{ matrix.language }}" == "cpp" ]; then
+            find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
+            find . -name "*.cpp" -o -name "*.h" | xargs cpplint || true
+          fi
 
       - name: Commit & Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: auto-fix lint issues"
+          commit_message: "chore: auto-fix lint issues for ${{ matrix.language }}"
           branch: ${{ github.ref_name }}
           commit_user_name: "mbenjam"
           commit_user_email: "mbenjam9@dtcc.edu"
