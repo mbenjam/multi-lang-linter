@@ -1,3 +1,23 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Run linters
+        run: |
+          npm run lint || true
+          python3 -m flake8 || true
+
       - name: Commit & Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
