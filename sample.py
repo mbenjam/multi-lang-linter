@@ -1,5 +1,5 @@
-def greet(name):
-    print(f"Hello, {name}!")
-    
-if __name__ == "__main__":
-    greet("World")
+def add ( a ,b ):
+  result=a+b
+  print( "Sum is " , result )
+  return  result
+add(1 ,2 )
