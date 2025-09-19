@@ -39,4 +39,8 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: auto-fix lint issues"
-          branch: ${{ github
+          branch: ${{ github.ref_name }}
+          commit_user_name: "mbenjam"
+          commit_user_email: "mbenjam9@dtcc.edu"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
